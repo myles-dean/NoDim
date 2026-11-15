@@ -1,0 +1,122 @@
+# Xcode project for No Dim. Generate with `xcodegen` (./build.sh does it for you).
+name: NoDim
+options:
+  bundleIdPrefix: com.mylesdean
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 3N7MVP4K42
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: Apple Development
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+targets:
+  NoDim:
+    type: application
+    platform: macOS
+    scheme: {}
+    sources:
+      - path: App
+        excludes:
+          - Icons # compiled by the "Mac app icons" script below
+      - Shared
+    dependencies:
+      - target: NoDimControls
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: No Dim
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleIconName: AppIcon
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: © 2026 Myles Dean
+        NoDimAppGroup: $(TeamIdentifierPrefix)com.mylesdean.NoDim
+        CFBundleURLTypes:
+          - CFBundleURLName: com.mylesdean.NoDim
+            CFBundleURLSchemes: [nodim]
+    entitlements:
+      path: App/NoDim.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.mylesdean.NoDim
+        # Only so the app can give itself the icon for this Mac (a Finder custom icon) after install.
+        com.apple.security.temporary-exception.files.absolute-path.read-write:
+          - /Applications/No Dim.app/
+        com.apple.security.temporary-exception.files.home-relative-path.read-write:
+          - /Applications/No Dim.app/
+    postBuildScripts:
+      - name: Mac app icons
+        basedOnDependencyAnalysis: false
+        # Each App/Icons/AppIcon-<mac>.icon goes into a throwaway app bundle so macOS can draw it in
+        # its current icon shape (Tools/render-app-icon.swift); the PNGs become No Dim's custom
+        # icon after install (AppIconUpdater).
+        script: |
+          set -e
+          OUT="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+          STAMP=$(date +%s)
+          rm -rf "$DERIVED_FILE_DIR"/icon-render-*
+          WORK="$DERIVED_FILE_DIR/icon-render-$STAMP"
+          mkdir -p "$OUT" "$WORK"
+          xcrun swiftc -O "$SRCROOT/Tools/render-app-icon.swift" -o "$WORK/render-app-icon"
+          for kind in laptop imac macmini; do
+            APP="$WORK/NoDimIcon-$kind.app"
+            mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+            xcrun actool "$SRCROOT/App/Icons/AppIcon-$kind.icon" --compile "$APP/Contents/Resources" --platform macosx \
+              --minimum-deployment-target "$MACOSX_DEPLOYMENT_TARGET" --app-icon "AppIcon-$kind" \
+              --output-partial-info-plist "$WORK/$kind.plist" > /dev/null
+            cp /usr/bin/true "$APP/Contents/MacOS/IconRender" # without a program macOS badges it "can't open"
+            PLIST="$APP/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.mylesdean.nodim.iconrender.$kind.$STAMP" \
+              -c "Add :CFBundlePackageType string APPL" -c "Add :CFBundleExecutable string IconRender" \
+              -c "Add :CFBundleIconName string AppIcon-$kind" -c "Add :CFBundleIconFile string AppIcon-$kind" \
+              -c "Add :LSMinimumSystemVersion string $MACOSX_DEPLOYMENT_TARGET" \
+              -c "Add :CFBundleSupportedPlatforms array" -c "Add :CFBundleSupportedPlatforms:0 string MacOSX" "$PLIST" > /dev/null
+            codesign --force --sign - "$APP" > /dev/null 2>&1
+            "$WORK/render-app-icon" "$APP" "$OUT/AppIcon-$kind.png"
+            "$LSREGISTER" -u "$APP" 2> /dev/null || true
+          done
+          rm -rf "$WORK"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mylesdean.NoDim
+        PRODUCT_NAME: No Dim
+        # App/AppIcon.icon (a screen with ∞) is the icon as downloaded; after install the app
+        # switches to the one for its Mac (Resources/AppIcon-<laptop|imac|macmini>.icns).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+  NoDimControls:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Controls
+      - Shared
+    info:
+      path: Controls/Info.plist
+      properties:
+        CFBundleDisplayName: No Dim
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NoDimAppGroup: $(TeamIdentifierPrefix)com.mylesdean.NoDim
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Controls/NoDimControls.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.mylesdean.NoDim
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mylesdean.NoDim.Controls
+        PRODUCT_NAME: NoDimControls
+        SKIP_INSTALL: YES
