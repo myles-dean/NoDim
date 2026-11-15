@@ -41,6 +41,14 @@ unless you want one, no menu bar icon: it's a tile in Control Center that reads 
 
 macOS doesn't let apps add tiles to Control Center themselves, so step 3 is always yours.
 
+Or install it with [Homebrew](https://brew.sh):
+
+```bash
+brew tap myles-dean/tap
+brew trust myles-dean/tap
+brew install --cask no-dim
+```
+
 ## Settings
 
 Open No Dim again any time (Spotlight, Launchpad or Finder), or click its menu bar icon, and its
