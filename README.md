@@ -10,6 +10,17 @@
 </p>
 
 <p align="center">
+  <img alt="macOS 26 Tahoe or later" src="https://img.shields.io/badge/macOS-26%20Tahoe%2B-111111?logo=apple&logoColor=white">
+  <img alt="Written in Swift" src="https://img.shields.io/badge/Swift-SwiftUI%20%2B%20AppKit-f05138?logo=swift&logoColor=white">
+  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-34c759">
+  <a href="https://github.com/myles-dean/NoDim/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/myles-dean/NoDim?label=release"></a>
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/mylesdean_"><img alt="Buy me a coffee on Ko-fi" src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white"></a>
+</p>
+
+<p align="center">
   <img src="docs/tiles-preview.png" width="420" alt="The No Dim tile in Control Center: Can Sleep and Always On, for MacBook, iMac and Mac mini">
 </p>
 
